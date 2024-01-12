@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8">
+  <title>Гистограмма</title>
+  <script src="https://www.google.com/jsapi"></script>
+  <script src="https://code.highcharts.com/highcharts.js"></script>
+
+  <script>
+   async function fetchRecords() {
+    let response = await fetch('http://127.0.0.1:8000/');
+    return await response.json();
+   }
+
+   document.addEventListener('DOMContentLoaded', async function () {
+    const data = await fetchRecords();
+    let date_array = []
+    for (var date in data){
+      date_array.push([Date.parse(date) ,data[date]])
+    }
+    const chart = Highcharts.chart('container', {
+
+    title: {
+        text: 'Температура',
+        align: 'left'
+    },
+
+    yAxis: {
+        title: {
+            text: 'Градусы'
+        }
+    },
+
+    xAxis: {
+        type: 'datetime'
+    },
+
+    legend: {
+        layout: 'vertical',
+        align: 'right',
+        verticalAlign: 'middle'
+    },
+
+    series: [{
+        name: 'Температура',
+        data: date_array
+    }],
+
+    responsive: {
+        rules: [{
+            condition: {
+                maxWidth: 500
+            },
+            chartOptions: {
+                legend: {
+                    layout: 'horizontal',
+                    align: 'center',
+                    verticalAlign: 'bottom'
+                }
+            }
+        }]
+    }
+
+});
+    });
+
+   async function filterByTime(){
+    let start_local_time = new Date(document.getElementById('start_date').value);
+    let start = new Date(start_local_time.getFullYear(), start_local_time.getMonth(), start_local_time.getDate(), start_local_time.getHours(), start_local_time.getMinutes());
+
+    let end_local_time = new Date(document.getElementById('end_date').value);
+    let end = new Date(end_local_time.getFullYear(), end_local_time.getMonth(), end_local_time.getDate(), end_local_time.getHours(), end_local_time.getMinutes())
+
+    let filtered_records = await fetch('http://127.0.0.1:8000/get_filter_records',
+            {
+             method:'POST',
+             body: JSON.stringify({'start': document.getElementById('start_date').value, 'end': document.getElementById('end_date').value}),
+             headers: {
+                   "Content-Type": "application/json",
+             },
+            }).then(result => result.json())
+
+    let filtered_records_array = []
+    for (var date in filtered_records){
+      filtered_records_array.push([date, filtered_records[date]])
+    }
+
+    const chart = Highcharts.chart('container', {
+
+    title: {
+        text: 'Температура',
+        align: 'left'
+    },
+
+    yAxis: {
+        title: {
+            text: 'Градусы'
+        }
+    },
+
+    xAxis: {
+        type: 'datetime'
+    },
+
+    legend: {
+        layout: 'vertical',
+        align: 'right',
+        verticalAlign: 'middle'
+    },
+
+    series: [{
+        name: 'Температура',
+        data: filtered_records_array
+    }],
+
+    responsive: {
+        rules: [{
+            condition: {
+                maxWidth: 500
+            },
+            chartOptions: {
+                legend: {
+                    layout: 'horizontal',
+                    align: 'center',
+                    verticalAlign: 'bottom'
+                }
+            }
+        }]
+    }
+    })
+   }
+  </script>
+ </head>
+
+ <body>
+ Start
+  <div style="display: flex">
+   <input id='start_date' type="datetime-local" >
+  </div>
+ End
+   <div style="display: flex">
+   <input id="end_date" type="datetime-local" >
+  </div>
+ <button onclick="filterByTime()">Ok</button>
+
+  <div id="container" style="width: 100%; height: 400px "></div>
+ </body>
+ </html>
